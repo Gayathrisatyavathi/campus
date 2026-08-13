@@ -1,26 +1,95 @@
 const mongoose = require("mongoose");
 
-let cached = global.__cmp_mongoose;
 
-if (!cached) {
-  cached = global.__cmp_mongoose = { conn: null, promise: null };
+/* =========================================================
+   MONGOOSE CONNECTION CACHE
+========================================================= */
+
+let cached = global.mongooseConnection;
+
+if (!cached)
+{
+    cached = global.mongooseConnection = {
+        conn: null,
+        promise: null
+    };
 }
 
-async function connectDB() {
-  if (cached.conn) return cached.conn;
 
-  if (!process.env.MONGODB_URI) {
-    throw new Error("MONGODB_URI is not configured");
-  }
+/* =========================================================
+   CONNECT TO MONGODB
+========================================================= */
 
-  if (!cached.promise) {
-    cached.promise = mongoose.connect(process.env.MONGODB_URI, {
-      serverSelectionTimeoutMS: 10000
-    }).then((mongooseInstance) => mongooseInstance);
-  }
+async function connectDB()
+{
+    /* -----------------------------------------------------
+       If already connected, reuse the connection
+    ----------------------------------------------------- */
 
-  cached.conn = await cached.promise;
-  return cached.conn;
+    if (cached.conn)
+    {
+        return cached.conn;
+    }
+
+
+    /* -----------------------------------------------------
+       Check MongoDB URI
+    ----------------------------------------------------- */
+
+    if (!process.env.MONGODB_URI)
+    {
+        throw new Error(
+            "MONGODB_URI is not defined in environment variables."
+        );
+    }
+
+
+    /* -----------------------------------------------------
+       Create connection promise only once
+    ----------------------------------------------------- */
+
+    if (!cached.promise)
+    {
+        cached.promise = mongoose.connect(
+            process.env.MONGODB_URI,
+            {
+                serverSelectionTimeoutMS: 10000
+            }
+        );
+    }
+
+
+    /* -----------------------------------------------------
+       Wait for MongoDB connection
+    ----------------------------------------------------- */
+
+    try
+    {
+        cached.conn = await cached.promise;
+
+        console.log(
+            "MongoDB connected successfully."
+        );
+    }
+    catch (error)
+    {
+        cached.promise = null;
+
+        console.error(
+            "MongoDB connection failed:",
+            error.message
+        );
+
+        throw error;
+    }
+
+
+    return cached.conn;
 }
+
+
+/* =========================================================
+   EXPORT
+========================================================= */
 
 module.exports = connectDB;
