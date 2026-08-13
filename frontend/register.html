@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Create Account • Campus Management Protocol</title><link rel="stylesheet" href="/css/style.css"></head>
+<body class="auth-body">
+  <div class="auth-shell"><a class="brand" href="/"><span class="brand-mark">CP</span><span>Campus Management Protocol</span></a>
+    <div class="auth-card wide">
+      <div class="eyebrow">START YOUR JOURNEY</div><h1>Create your student account.</h1><p>One account for your campus career, placement and learning journey.</p>
+      <form id="register-form" class="form-grid">
+        <label>Full Name<input name="name" required minlength="2" placeholder="Your full name"></label>
+        <label>Email<input type="email" name="email" required placeholder="you@example.com"></label>
+        <label>Password<input type="password" name="password" required minlength="8" placeholder="Minimum 8 characters"></label>
+        <label>Confirm Password<input type="password" name="confirmPassword" required minlength="8" placeholder="Repeat password"></label>
+        <label>Phone Number<input name="phone" placeholder="+91 ..."></label>
+        <label>Date of Birth<input type="date" name="dateOfBirth"></label>
+        <label>Gender<select name="gender"><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option><option>Prefer not to say</option></select></label>
+        <label>College<input name="college" placeholder="College name"></label>
+        <label>Student ID<input name="studentId" placeholder="Roll / ID"></label>
+        <div class="form-span"><button class="btn primary full" type="submit">Create Account <span>→</span></button></div>
+      </form>
+      <div id="form-message" class="form-message"></div>
+      <div class="auth-links"><span>Already registered?</span><a href="/login.html">Sign In</a></div>
+    </div>
+  </div>
+  <script src="/js/auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dashboard • Campus Management Protocol</title><link rel="stylesheet" href="/css/style.css"></head>
+<body class="dashboard-body">
+  <div id="toast-root"></div>
+  <aside class="sidebar" id="sidebar">
+    <a class="brand" href="/dashboard.html"><span class="brand-mark">CP</span><span>Campus Protocol</span></a>
+    <nav>
+      <button class="side-link active" data-section="dashboard">⌂ <span>Dashboard</span></button>
+      <button class="side-link" data-section="profile">◉ <span>My Profile</span></button>
+      <button class="side-link" data-section="placements">◈ <span>Placements</span></button>
+      <button class="side-link" data-section="companyCalls">⌁ <span>Company Calls</span></button>
+      <button class="side-link" data-section="jobs">⚑ <span>Job Notifications</span></button>
+      <button class="side-link" data-section="aiSkills">✦ <span>AI Skills</span></button>
+      <button class="side-link" data-section="training">↗ <span>Training</span></button>
+      <button class="side-link" data-section="courses">◇ <span>Courses</span></button>
+      <button class="side-link" data-section="interviews">◎ <span>Interviews</span></button>
+      <button class="side-link" data-section="tests">▣ <span>Tests</span></button>
+      <button class="side-link" data-section="hiring">✓ <span>Hiring Status</span></button>
+      <button class="side-link" data-section="achievements">★ <span>Achievements</span></button>
+      <button class="side-link" data-section="resume">▤ <span>Resume</span></button>
+      <button class="side-link" data-section="settings">⚙ <span>Settings</span></button>
+    </nav>
+    <button id="logout" class="logout">↪ <span>Logout</span></button>
+  </aside>
+
+  <main class="dash-main">
+    <header class="dash-topbar"><button id="sidebar-toggle" class="icon-btn">☰</button><div><span class="eyebrow">STUDENT CAREER HUB</span><h1 id="page-title">Dashboard</h1></div><div class="top-user"><span id="user-avatar">H</span><span id="user-name">Student</span></div></header>
+    <div id="dashboard-content" class="dash-content"></div>
+  </main>
+  <script src="/js/dashboard.js"></script>
+</body>
+</html>

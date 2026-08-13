@@ -1,0 +1,15 @@
+const router=require("express").Router();
+const {authRequired}=require("../middleware/auth");
+const {adminRequired}=require("../middleware/admin");
+const c=require("../controllers/adminController");
+router.use(authRequired,adminRequired);
+router.get("/stats",c.stats);
+router.get("/students",c.students);
+router.get("/hiring",c.hiring);
+router.post("/hiring",c.upsertHiring);
+router.post("/admins",c.createAdmin);
+router.get("/:resource",c.resources);
+router.post("/:resource",c.createResource);
+router.put("/:resource/:id",c.updateResource);
+router.delete("/:resource/:id",c.deleteResource);
+module.exports=router;
