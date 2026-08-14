@@ -1298,3 +1298,30 @@ table {
             none !important;
     }
 }
+/* =========================================================
+   DEPLOYMENT / MOBILE FIX OVERRIDE
+   Keeps existing design and prevents mobile header controls
+   from being parsed inside <head>.
+========================================================= */
+.dashboard-mobile-actions {
+    display: none;
+}
+
+@media (max-width: 760px) {
+    .dashboard-mobile-actions {
+        display: flex;
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        z-index: 1100;
+        pointer-events: none;
+    }
+
+    .dashboard-mobile-actions .icon-btn {
+        pointer-events: auto;
+    }
+
+    .dash-topbar {
+        padding-left: 62px;
+    }
+}

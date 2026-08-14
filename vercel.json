@@ -6,64 +6,20 @@
       "destination": "/api/index"
     },
     {
+      "source": "/css/(.*)",
+      "destination": "/frontend/css/$1"
+    },
+    {
+      "source": "/js/(.*)",
+      "destination": "/frontend/js/$1"
+    },
+    {
+      "source": "/(.*\\.html)",
+      "destination": "/frontend/$1"
+    },
+    {
       "source": "/",
       "destination": "/frontend/index.html"
-    },
-    {
-      "source": "/login",
-      "destination": "/frontend/login.html"
-    },
-    {
-      "source": "/register",
-      "destination": "/frontend/register.html"
-    },
-    {
-      "source": "/dashboard",
-      "destination": "/frontend/dashboard.html"
-    },
-    {
-      "source": "/profile",
-      "destination": "/frontend/profile.html"
-    },
-    {
-      "source": "/placements",
-      "destination": "/frontend/placements.html"
-    },
-    {
-      "source": "/companies",
-      "destination": "/frontend/companies.html"
-    },
-    {
-      "source": "/jobs",
-      "destination": "/frontend/jobs.html"
-    },
-    {
-      "source": "/ai-skills",
-      "destination": "/frontend/ai-skills.html"
-    },
-    {
-      "source": "/training",
-      "destination": "/frontend/training.html"
-    },
-    {
-      "source": "/courses",
-      "destination": "/frontend/courses.html"
-    },
-    {
-      "source": "/interviews",
-      "destination": "/frontend/interviews.html"
-    },
-    {
-      "source": "/tests",
-      "destination": "/frontend/tests.html"
-    },
-    {
-      "source": "/achievements",
-      "destination": "/frontend/achievements.html"
-    },
-    {
-      "source": "/admin",
-      "destination": "/frontend/admin.html"
     }
   ]
 }
