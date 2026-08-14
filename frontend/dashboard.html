@@ -1,7 +1,25 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dashboard • Campus Management Protocol</title><link rel="stylesheet" href="/css/style.css"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dashboard • Campus Management Protocol</title><link rel="stylesheet" href="/css/style.css"><button
+    type="button"
+    class="icon-btn"
+    id="sidebarToggle"
+    aria-label="Open navigation">
+    ☰
+</button>
+<button
+    class="menu-toggle"
+    id="menuToggle"
+    type="button"
+    aria-label="Open menu"
+    aria-expanded="false">
+    ☰
+</button></head>
 <body class="dashboard-body">
+  <div
+        class="sidebar-overlay"
+        id="sidebarOverlay">
+    </div>
   <div id="toast-root"></div>
   <aside class="sidebar" id="sidebar">
     <a class="brand" href="/dashboard.html"><span class="brand-mark">CP</span><span>Campus Protocol</span></a>

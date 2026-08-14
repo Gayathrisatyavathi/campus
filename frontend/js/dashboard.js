@@ -1,4 +1,211 @@
 const state = { user: null, profile: null, dashboard: null };
+const mobileMenuBtn =
+    document.getElementById("mobileMenuBtn");
+
+const sidebar =
+    document.querySelector(".dashboard-sidebar");
+
+
+if (mobileMenuBtn && sidebar)
+{
+    mobileMenuBtn.addEventListener("click", () =>
+    {
+        sidebar.classList.toggle("active");
+    });
+}
+/* =========================================================
+   MOBILE SIDEBAR
+========================================================= */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function ()
+    {
+        const sidebar =
+            document.getElementById("sidebar");
+
+        const sidebarToggle =
+            document.getElementById(
+                "sidebarToggle"
+            );
+
+        const sidebarOverlay =
+            document.getElementById(
+                "sidebarOverlay"
+            );
+
+
+        if (!sidebar)
+        {
+            return;
+        }
+
+
+        function openSidebar()
+        {
+            sidebar.classList.add("open");
+
+            if (sidebarOverlay)
+            {
+                sidebarOverlay.classList.add(
+                    "active"
+                );
+            }
+
+            document.body.style.overflow =
+                "hidden";
+        }
+
+
+        function closeSidebar()
+        {
+            sidebar.classList.remove("open");
+
+            if (sidebarOverlay)
+            {
+                sidebarOverlay.classList.remove(
+                    "active"
+                );
+            }
+
+            document.body.style.overflow =
+                "";
+        }
+
+
+        if (sidebarToggle)
+        {
+            sidebarToggle.addEventListener(
+                "click",
+                function ()
+                {
+                    if (
+                        sidebar.classList.contains(
+                            "open"
+                        )
+                    )
+                    {
+                        closeSidebar();
+                    }
+                    else
+                    {
+                        openSidebar();
+                    }
+                }
+            );
+        }
+
+
+        if (sidebarOverlay)
+        {
+            sidebarOverlay.addEventListener(
+                "click",
+                closeSidebar
+            );
+        }
+
+
+        /* Close menu after clicking a page */
+
+        sidebar
+            .querySelectorAll(
+                ".side-link"
+            )
+            .forEach(
+                function (link)
+                {
+                    link.addEventListener(
+                        "click",
+                        function ()
+                        {
+                            if (
+                                window.innerWidth <=
+                                760
+                            )
+                            {
+                                closeSidebar();
+                            }
+                        }
+                    );
+                }
+            );
+
+
+        /* Close when resizing back to desktop */
+
+        window.addEventListener(
+            "resize",
+            function ()
+            {
+                if (
+                    window.innerWidth > 760
+                )
+                {
+                    closeSidebar();
+                }
+            }
+        );
+    }
+);
+document.addEventListener(
+    "DOMContentLoaded",
+    function ()
+    {
+        const menuToggle =
+            document.getElementById(
+                "menuToggle"
+            );
+
+        const nav =
+            document.querySelector(
+                ".landing-nav nav"
+            );
+
+
+        if (!menuToggle || !nav)
+        {
+            return;
+        }
+
+
+        menuToggle.addEventListener(
+            "click",
+            function ()
+            {
+                const isOpen =
+                    nav.classList.toggle(
+                        "open"
+                    );
+
+                menuToggle.setAttribute(
+                    "aria-expanded",
+                    String(isOpen)
+                );
+            }
+        );
+
+
+        nav.querySelectorAll("a").forEach(
+            function (link)
+            {
+                link.addEventListener(
+                    "click",
+                    function ()
+                    {
+                        nav.classList.remove(
+                            "open"
+                        );
+
+                        menuToggle.setAttribute(
+                            "aria-expanded",
+                            "false"
+                        );
+                    }
+                );
+            }
+        );
+    }
+);
 const content = document.getElementById("dashboard-content");
 const title = document.getElementById("page-title");
 async function api(url, options = {}) { const response = await fetch(url, { credentials:"include", ...options }); const data=await response.json().catch(()=>({})); if(!response.ok) throw new Error(data.message||"Request failed."); return data; }
