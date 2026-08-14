@@ -1,8 +1,7 @@
 const dns = require("dns");
 
-// Use Google DNS.
-// This helps with MongoDB Atlas SRV resolution on systems
-// where the default DNS server has problems.
+// Use Google DNS locally/Vercel where supported.
+// This helps with MongoDB SRV DNS resolution.
 dns.setServers([
     "8.8.8.8",
     "8.8.4.4"
@@ -25,14 +24,18 @@ const resourceRoutes = require("./routes/resources");
 const dashboardRoutes = require("./routes/dashboard");
 const adminRoutes = require("./routes/admin");
 
-const { notFound, errorHandler } = require("./middleware/error");
-const { downloadStream } = require("./services/gridfs");
-const { authRequired } = require("./middleware/auth");
+const {
+    notFound,
+    errorHandler
+} = require("./middleware/error");
 
+const {
+    downloadStream
+} = require("./services/gridfs");
 
-/* =========================================================
-   APP
-========================================================= */
+const {
+    authRequired
+} = require("./middleware/auth");
 
 const app = express();
 
@@ -40,19 +43,21 @@ const isProduction = process.env.NODE_ENV === "production";
 
 const frontendOrigin =
     process.env.FRONTEND_URL ||
-    "http://localhost:3000";
+    (isProduction
+        ? "https://your-vercel-domain.vercel.app"
+        : "http://localhost:3000");
 
 
-/* =========================================================
-   TRUST PROXY
-========================================================= */
+// ======================================================
+// BASIC APP SETTINGS
+// ======================================================
 
 app.set("trust proxy", 1);
 
 
-/* =========================================================
-   SECURITY
-========================================================= */
+// ======================================================
+// SECURITY
+// ======================================================
 
 app.use(
     helmet({
@@ -65,21 +70,49 @@ app.use(
 );
 
 
-/* =========================================================
-   CORS
-========================================================= */
+// ======================================================
+// CORS
+// ======================================================
+
+const allowedOrigins = frontendOrigin
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
 
 app.use(
     cors({
-        origin: frontendOrigin,
+        origin: function (origin, callback) {
+
+            // Allow server-to-server / Postman requests
+            if (!origin) {
+                return callback(null, true);
+            }
+
+            if (allowedOrigins.includes(origin)) {
+                return callback(null, true);
+            }
+
+            // Allow Vercel preview deployments
+            if (
+                isProduction &&
+                origin.endsWith(".vercel.app")
+            ) {
+                return callback(null, true);
+            }
+
+            return callback(
+                new Error("Not allowed by CORS")
+            );
+        },
+
         credentials: true
     })
 );
 
 
-/* =========================================================
-   BODY PARSING
-========================================================= */
+// ======================================================
+// BODY PARSING
+// ======================================================
 
 app.use(
     express.json({
@@ -97,154 +130,88 @@ app.use(
 app.use(cookieParser());
 
 
-/* =========================================================
-   DATABASE MIDDLEWARE
-========================================================= */
+// ======================================================
+// HEALTH CHECK
+// ======================================================
 
-/*
-    Every API request first makes sure that MongoDB
-    is connected.
+app.get("/api/health", async (req, res) => {
 
-    This is important on Vercel because Vercel uses
-    serverless functions and the process may be reused
-    between requests.
-*/
+    try {
 
-app.use("/api", async (req, res, next) =>
-{
-    try
-    {
         await connectDB();
 
-        next();
-    }
-    catch (error)
-    {
+        return res.status(200).json({
+            ok: true,
+            service: "Campus Management Protocol",
+            database: "connected",
+            environment: process.env.NODE_ENV || "development"
+        });
+
+    } catch (error) {
+
         console.error(
-            "MongoDB connection error:",
+            "Health check database error:",
             error
         );
 
         return res.status(503).json({
-            success: false,
-            message: "Database unavailable."
+            ok: false,
+            service: "Campus Management Protocol",
+            database: "disconnected",
+            message: "Database unavailable"
         });
     }
 });
 
 
-/* =========================================================
-   AUTH RATE LIMIT
-========================================================= */
+// ======================================================
+// AUTH RATE LIMIT
+// ======================================================
 
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
 
     limit: 100,
 
-    standardHeaders: "draft-8",
+    standardHeaders: true,
 
     legacyHeaders: false,
 
     message: {
-        success: false,
-        message: "Too many authentication requests. Please try again later."
+        message:
+            "Too many authentication requests. Please try again later."
     }
 });
-
-
-/* =========================================================
-   AUTH ROUTES
-========================================================= */
 
 app.use(
     "/api/auth",
-    authLimiter,
-    authRoutes
+    authLimiter
 );
 
 
-/* =========================================================
-   HEALTH CHECK
-========================================================= */
+// ======================================================
+// API ROUTES
+// ======================================================
 
-app.get("/api/health", async (req, res) =>
-{
-    try
-    {
-        await connectDB();
-
-        return res.status(200).json({
-            success: true,
-            ok: true,
-            service: "Campus Management Protocol",
-            database: "connected",
-            environment: process.env.NODE_ENV || "development"
-        });
-    }
-    catch (error)
-    {
-        console.error(
-            "Health check failed:",
-            error
-        );
-
-        return res.status(503).json({
-            success: false,
-            ok: false,
-            service: "Campus Management Protocol",
-            database: "disconnected"
-        });
-    }
-});
-
-
-/* =========================================================
-   STUDENT ROUTES
-========================================================= */
+app.use(
+    "/api/auth",
+    authRoutes
+);
 
 app.use(
     "/api/student",
     studentRoutes
 );
 
-
-/* =========================================================
-   DASHBOARD ROUTES
-========================================================= */
-
 app.use(
     "/api/dashboard",
     dashboardRoutes
 );
 
-
-/* =========================================================
-   RESOURCE ROUTES
-========================================================= */
-
-/*
-    This route file can contain:
-
-    /api/placements
-    /api/company-calls
-    /api/jobs
-    /api/training
-    /api/courses
-    /api/interviews
-    /api/tests
-    /api/achievements
-*/
-
 app.use(
     "/api",
     resourceRoutes
 );
-
-
-/* =========================================================
-   ADMIN ROUTES
-========================================================= */
 
 app.use(
     "/api/admin",
@@ -252,267 +219,176 @@ app.use(
 );
 
 
-/* =========================================================
-   RESUME DOWNLOAD
-========================================================= */
+// ======================================================
+// RESUME / GRIDFS DOWNLOAD
+// ======================================================
 
 app.get(
     "/api/student/resume/:fileId",
     authRequired,
-    async (req, res, next) =>
-    {
-        try
-        {
-            const { ObjectId } = require("mongodb");
+    async (req, res, next) => {
 
-            const fileId = req.params.fileId;
+        try {
 
+            const {
+                ObjectId
+            } = require("mongodb");
 
-            /* ---------------------------------------------
-               Validate ObjectId
-            --------------------------------------------- */
+            const fileId =
+                req.params.fileId;
 
-            if (!ObjectId.isValid(fileId))
-            {
+            if (!ObjectId.isValid(fileId)) {
+
                 return res.status(400).json({
-                    success: false,
                     message: "Invalid file id."
                 });
             }
 
+            const stream =
+                downloadStream(fileId);
 
-            /* ---------------------------------------------
-               Create GridFS stream
-            --------------------------------------------- */
+            let headersSent = false;
 
-            const stream = downloadStream(fileId);
+            stream.on("file", (file) => {
 
+                const ownerId =
+                    file.metadata?.userId;
 
-            /* ---------------------------------------------
-               File information
-            --------------------------------------------- */
-
-            stream.on("file", (file) =>
-            {
-                const metadata = file.metadata || {};
-
-
-                /* -----------------------------------------
-                   Ownership check
-                ----------------------------------------- */
+                const currentUserId =
+                    String(req.userId);
 
                 if (
-                    metadata.userId &&
-                    String(metadata.userId) !== String(req.userId)
-                )
-                {
-                    stream.destroy();
+                    ownerId &&
+                    String(ownerId) !== currentUserId
+                ) {
 
-                    return res.status(403).json({
-                        success: false,
-                        message: "Forbidden."
-                    });
+                    if (!res.headersSent) {
+
+                        return res.status(403).json({
+                            message: "Forbidden."
+                        });
+                    }
+
+                    return;
                 }
 
+                if (!res.headersSent) {
 
-                /* -----------------------------------------
-                   Headers
-                ----------------------------------------- */
+                    res.setHeader(
+                        "Content-Type",
+                        file.contentType ||
+                        "application/octet-stream"
+                    );
 
-                res.setHeader(
-                    "Content-Type",
-                    file.contentType ||
-                    "application/octet-stream"
-                );
+                    res.setHeader(
+                        "Content-Disposition",
+                        `inline; filename="${String(
+                            file.filename || "resume"
+                        ).replace(/"/g, "")}"`
+                    );
 
-
-                const filename = String(
-                    file.filename || "resume"
-                ).replace(/"/g, "");
-
-
-                res.setHeader(
-                    "Content-Disposition",
-                    `inline; filename="${filename}"`
-                );
+                    headersSent = true;
+                }
             });
 
+            stream.on("error", (error) => {
 
-            /* ---------------------------------------------
-               Stream error
-            --------------------------------------------- */
-
-            stream.on("error", (error) =>
-            {
                 console.error(
                     "Resume download error:",
                     error
                 );
 
-                if (!res.headersSent)
-                {
+                if (!res.headersSent) {
+
                     return res.status(404).json({
-                        success: false,
                         message: "File not found."
                     });
                 }
-
-                res.end();
             });
 
-
-            /* ---------------------------------------------
-               Send stream
-            --------------------------------------------- */
-
             stream.pipe(res);
-        }
-        catch (error)
-        {
+
+        } catch (error) {
+
             next(error);
         }
     }
 );
 
 
-/* =========================================================
-   FRONTEND STATIC FILES
-========================================================= */
+// ======================================================
+// STATIC FRONTEND
+// ======================================================
 
-const frontendPath = path.join(
-    __dirname,
-    "../frontend"
-);
-
-
-/*
-    This makes files such as:
-
-    frontend/index.html
-    frontend/login.html
-    frontend/register.html
-    frontend/css/style.css
-    frontend/js/main.js
-
-    available to the browser.
-*/
+const frontendPath =
+    path.join(__dirname, "../frontend");
 
 app.use(
-    express.static(frontendPath)
+    express.static(frontendPath, {
+        index: "index.html"
+    })
 );
 
 
-/* =========================================================
-   FRONTEND ROUTING
-========================================================= */
+// ======================================================
+// LOCAL DEVELOPMENT FALLBACK
+// ======================================================
 
-/*
-    API routes have already been registered above.
+if (!process.env.VERCEL) {
 
-    Everything that is NOT an API request is treated
-    as a frontend request.
-*/
+    app.get("*", (req, res, next) => {
 
-app.get("/{*splat}", (req, res, next) =>
-{
-    if (req.path.startsWith("/api/"))
-    {
-        return next();
-    }
+        if (
+            req.path.startsWith("/api/")
+        ) {
 
+            return next();
+        }
 
-    /*
-        If the requested file exists, express.static()
-        above will already have served it.
-
-        Otherwise return the main frontend page.
-    */
-
-    res.sendFile(
-        path.join(
-            frontendPath,
-            "index.html"
-        )
-    );
-});
+        return res.sendFile(
+            path.join(
+                frontendPath,
+                "index.html"
+            )
+        );
+    });
+}
 
 
-/* =========================================================
-   404 HANDLER
-========================================================= */
+// ======================================================
+// ERROR HANDLERS
+// ======================================================
 
 app.use(notFound);
-
-
-/* =========================================================
-   GLOBAL ERROR HANDLER
-========================================================= */
 
 app.use(errorHandler);
 
 
-/* =========================================================
-   LOCAL DEVELOPMENT SERVER
-========================================================= */
+// ======================================================
+// LOCAL DEVELOPMENT SERVER
+// ======================================================
 
-async function bootstrap()
-{
-    try
-    {
-        /*
-            Connect to MongoDB before starting
-            the local development server.
-        */
+async function bootstrap() {
+
+    try {
 
         await connectDB();
 
+        const port =
+            process.env.PORT || 3000;
 
-        /*
-            Vercel does NOT use app.listen().
-            Vercel handles the HTTP server itself.
-        */
+        app.listen(
+            port,
+            () => {
 
-        if (!process.env.VERCEL)
-        {
-            const port =
-                process.env.PORT || 3000;
+                console.log(
+                    `Campus Management Protocol running at http://localhost:${port}`
+                );
+            }
+        );
 
+    } catch (error) {
 
-            app.listen(
-                port,
-                () =>
-                {
-                    console.log(
-                        "========================================"
-                    );
-
-                    console.log(
-                        "Campus Management Protocol"
-                    );
-
-                    console.log(
-                        `Running at: http://localhost:${port}`
-                    );
-
-                    console.log(
-                        "MongoDB: Connected"
-                    );
-
-                    console.log(
-                        "Environment:",
-                        process.env.NODE_ENV ||
-                        "development"
-                    );
-
-                    console.log(
-                        "========================================"
-                    );
-                }
-            );
-        }
-    }
-    catch (error)
-    {
         console.error(
             "Startup failed:",
             error
@@ -523,18 +399,21 @@ async function bootstrap()
 }
 
 
-/* =========================================================
-   START LOCAL SERVER
-========================================================= */
+// ======================================================
+// START ONLY LOCALLY
+// ======================================================
 
-if (require.main === module)
-{
+if (
+    require.main === module &&
+    !process.env.VERCEL
+) {
+
     bootstrap();
 }
 
 
-/* =========================================================
-   EXPORT FOR VERCEL
-========================================================= */
+// ======================================================
+// EXPORT FOR VERCEL
+// ======================================================
 
 module.exports = app;
