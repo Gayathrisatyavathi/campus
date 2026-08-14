@@ -7,6 +7,7 @@ const Course = require("../models/Course");
 const Interview = require("../models/Interview");
 const Test = require("../models/Test");
 const Achievement = require("../models/Achievement");
+const TrainingRegistration = require("../models/TrainingRegistration");
 
 async function dashboard(req, res) {
   const [profile, placements, jobs, calls, training, courses, interviews, tests, achievements] = await Promise.all([

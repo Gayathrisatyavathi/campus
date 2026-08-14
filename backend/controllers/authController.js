@@ -29,9 +29,21 @@ async function register(req, res) {
     name, email: normalized, password: hashed, phone, dateOfBirth, gender, college, studentId
   });
 
-  await StudentProfile.create({
-    userId: user._id, fullName: name, email: normalized, phone, dateOfBirth, gender, college, rollNumber: studentId, profileCompletion: 0
-  });
+  await StudentProfile.findOneAndUpdate(
+    { userId: user._id },
+    {
+      userId: user._id,
+      fullName: name,
+      email: normalized,
+      phone,
+      dateOfBirth,
+      gender,
+      college,
+      rollNumber: studentId,
+      profileCompletion: 0
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
 
   res.cookie(process.env.COOKIE_NAME || "cmp_token", signToken(user), cookieOptions);
   res.status(201).json({ message: "Account created successfully!", user: { id: user._id, name: user.name, email: user.email, role: user.role } });

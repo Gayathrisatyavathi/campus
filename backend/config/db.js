@@ -1,95 +1,60 @@
 const mongoose = require("mongoose");
 
+/*
+ * MongoDB connection cache.
+ * Vercel may reuse the same serverless instance, so keep one connection
+ * promise globally instead of opening a new connection for every request.
+ */
+const globalCache = global.__campusMongo || {
+    conn: null,
+    promise: null
+};
 
-/* =========================================================
-   MONGOOSE CONNECTION CACHE
-========================================================= */
+global.__campusMongo = globalCache;
 
-let cached = global.mongooseConnection;
+async function connectDB() {
+    const uri = process.env.MONGODB_URI;
 
-if (!cached)
-{
-    cached = global.mongooseConnection = {
-        conn: null,
-        promise: null
-    };
-}
-
-
-/* =========================================================
-   CONNECT TO MONGODB
-========================================================= */
-
-async function connectDB()
-{
-    /* -----------------------------------------------------
-       If already connected, reuse the connection
-    ----------------------------------------------------- */
-
-    if (cached.conn)
-    {
-        return cached.conn;
+    if (!uri) {
+        throw new Error("MONGODB_URI is not configured.");
     }
 
-
-    /* -----------------------------------------------------
-       Check MongoDB URI
-    ----------------------------------------------------- */
-
-    if (!process.env.MONGODB_URI)
-    {
+    if (!/^mongodb(?:\+srv)?:\/\/[^@]+@/i.test(uri)) {
         throw new Error(
-            "MONGODB_URI is not defined in environment variables."
+            "Invalid MONGODB_URI. Expected mongodb+srv://USERNAME:PASSWORD@HOST/..."
         );
     }
 
-
-    /* -----------------------------------------------------
-       Create connection promise only once
-    ----------------------------------------------------- */
-
-    if (!cached.promise)
-    {
-        cached.promise = mongoose.connect(
-            process.env.MONGODB_URI,
-            {
-                serverSelectionTimeoutMS: 10000
-            }
-        );
+    // readyState: 1 = connected, 2 = connecting
+    if (mongoose.connection.readyState === 1 && globalCache.conn) {
+        return globalCache.conn;
     }
 
-
-    /* -----------------------------------------------------
-       Wait for MongoDB connection
-    ----------------------------------------------------- */
-
-    try
-    {
-        cached.conn = await cached.promise;
-
-        console.log(
-            "MongoDB connected successfully."
-        );
-    }
-    catch (error)
-    {
-        cached.promise = null;
-
-        console.error(
-            "MongoDB connection failed:",
-            error.message
-        );
-
-        throw error;
+    if (globalCache.promise) {
+        return globalCache.promise;
     }
 
+    globalCache.promise = mongoose.connect(uri, {
+        serverSelectionTimeoutMS: 8000,
+        connectTimeoutMS: 8000,
+        socketTimeoutMS: 45000,
+        maxPoolSize: 10,
+        minPoolSize: 0,
+        retryWrites: true
+    })
+        .then((connection) => {
+            globalCache.conn = connection;
+            console.log("MongoDB connected successfully.");
+            return connection;
+        })
+        .catch((error) => {
+            globalCache.conn = null;
+            globalCache.promise = null;
+            console.error("MongoDB connection failed:", error.message);
+            throw error;
+        });
 
-    return cached.conn;
+    return globalCache.promise;
 }
-
-
-/* =========================================================
-   EXPORT
-========================================================= */
 
 module.exports = connectDB;

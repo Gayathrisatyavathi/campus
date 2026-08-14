@@ -1,13 +1,12 @@
-const dns = require("dns");
-
-// Use Google DNS locally/Vercel where supported.
-// This helps with MongoDB SRV DNS resolution.
-dns.setServers([
-    "8.8.8.8",
-    "8.8.4.4"
-]);
-
 require("dotenv").config();
+
+// Google DNS can be enabled for local networks that block MongoDB SRV DNS.
+// Do not force custom DNS inside Vercel/serverless unless explicitly requested.
+if (process.env.USE_GOOGLE_DNS === "true") {
+    const dns = require("dns");
+    dns.setServers(["8.8.8.8", "8.8.4.4"]);
+}
+
 
 const path = require("path");
 const express = require("express");
@@ -131,6 +130,32 @@ app.use(cookieParser());
 
 
 // ======================================================
+// DATABASE MIDDLEWARE
+// ======================================================
+// IMPORTANT for Vercel: serverless functions do not run the local
+// bootstrap() function. Every API request therefore makes sure MongoDB
+// is connected before any Mongoose query is executed.
+app.use("/api", async (req, res, next) => {
+    // Let the health endpoint report its own connection error.
+    if (req.path === "/health") {
+        return next();
+    }
+
+    try {
+        await connectDB();
+        next();
+    } catch (error) {
+        console.error("API database connection error:", error.message);
+        res.status(503).json({
+            ok: false,
+            message: "Database unavailable. Check MONGODB_URI and MongoDB Atlas Network Access.",
+            ...(process.env.NODE_ENV !== "production" ? { details: error.message } : {})
+        });
+    }
+});
+
+
+// ======================================================
 // HEALTH CHECK
 // ======================================================
 
@@ -144,6 +169,8 @@ app.get("/api/health", async (req, res) => {
             ok: true,
             service: "Campus Management Protocol",
             database: "connected",
+            readyState: 1,
+            host: require("mongoose").connection.host || null,
             environment: process.env.NODE_ENV || "development"
         });
 

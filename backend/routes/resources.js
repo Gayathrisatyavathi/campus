@@ -2,6 +2,8 @@ const router = require("express").Router();
 const { authRequired } = require("../middleware/auth");
 const { list, createAchievement, updateAchievement, deleteAchievement, applyPlacement } = require("../controllers/crudController");
 const { submit, getMyResults } = require("../controllers/testController");
+const Training = require("../models/Training");
+const TrainingRegistration = require("../models/TrainingRegistration");
 
 router.use(authRequired);
 
@@ -12,6 +14,28 @@ router.get("/test-results", getMyResults);
 router.get("/:resource", list);
 
 router.post("/placements/:id/apply", applyPlacement);
+
+router.post("/training/:id/register", async (req, res, next) => {
+    try {
+        const training = await Training.findById(req.params.id);
+        if (!training) {
+            return res.status(404).json({ message: "Training program not found." });
+        }
+
+        const registration = await TrainingRegistration.findOneAndUpdate(
+            { userId: req.userId, trainingId: training._id },
+            { userId: req.userId, trainingId: training._id, status: "Registered" },
+            { upsert: true, new: true, setDefaultsOnInsert: true }
+        ).populate("trainingId", "title provider startDate duration");
+
+        res.status(201).json({
+            message: `Registered successfully for ${training.title}.`,
+            registration
+        });
+    } catch (error) {
+        next(error);
+    }
+});
 router.post("/achievements", createAchievement);
 router.put("/achievements/:id", updateAchievement);
 router.delete("/achievements/:id", deleteAchievement);
