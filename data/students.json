@@ -1,5 +1,0 @@
-[
-  {"name":"Rahul Kumar","email":"rahul.demo@campus.local","phone":"9000000001","college":"Sri Vasavi Engineering College","studentId":"CSE001","department":"CSE","course":"B.Tech","year":"4","rollNumber":"CSE001","cgpa":8.7,"skills":["Java","DSA","MongoDB"]},
-  {"name":"Ananya Reddy","email":"ananya.demo@campus.local","phone":"9000000002","college":"Sri Vasavi Engineering College","studentId":"CSE002","department":"CSE","course":"B.Tech","year":"4","rollNumber":"CSE002","cgpa":9.1,"skills":["Python","Machine Learning","SQL"]},
-  {"name":"Vikram Sai","email":"vikram.demo@campus.local","phone":"9000000003","college":"Sri Vasavi Engineering College","studentId":"CSE003","department":"CSE","course":"B.Tech","year":"3","rollNumber":"CSE003","cgpa":8.2,"skills":["JavaScript","Node.js","React"]}
-]
