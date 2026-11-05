@@ -361,22 +361,17 @@ app.use(
 // LOCAL DEVELOPMENT FALLBACK
 // ======================================================
 
-if (!process.env.VERCEL) {
-
-    app.get("*", (req, res, next) => {
-
-        if (
-            req.path.startsWith("/api/")
-        ) {
-
+if (!process.env.VERCEL)
+{
+    app.get("/{*splat}", (req, res, next) =>
+    {
+        if (req.path.startsWith("/api/"))
+        {
             return next();
         }
 
         return res.sendFile(
-            path.join(
-                frontendPath,
-                "index.html"
-            )
+            path.join(frontendPath, "index.html")
         );
     });
 }

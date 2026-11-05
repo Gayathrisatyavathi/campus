@@ -1,10 +1,12 @@
-const mongoose = require("mongoose");
+const dns = require("node:dns");
 
-/*
- * MongoDB connection cache.
- * Vercel may reuse the same serverless instance, so keep one connection
- * promise globally instead of opening a new connection for every request.
- */
+// Fix Node.js MongoDB SRV DNS resolution
+if (process.env.NODE_ENV !== "production")
+{
+    dns.setServers(["8.8.8.8", "8.8.4.4"]);
+}
+
+const mongoose = require("mongoose");
 const globalCache = global.__campusMongo || {
     conn: null,
     promise: null
